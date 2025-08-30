@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#000000">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+    <link rel="manifest" href="manifest.json">
+    <title>Full Screen Clock</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Andale Mono', 'Menlo', 'Roboto Mono', 'Ubuntu Mono', 'SF Mono', 'Monaco', 'Inconsolata', 'Source Code Pro', 'Consolas', 'DejaVu Sans Mono', 'Courier New', 'Liberation Mono', 'Lucida Console', monospace;
+            background: black;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .clock-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            height: 100vh;
+            width: 100vw;
+            font-weight: bold;
+            fill: #ffffffff;
+
+        }
+
+        .digit-span {
+            /* border: 1px solid red; */
+            display: inline-block;
+        }
+
+        .digit-svg {
+            width: 12vw; /* adjusted for more digits (hours, minutes, seconds) */
+            height: 100vh;
+            display: block;
+        }
+
+        .colon-span {
+            /* border: 1px solid red; */
+            display: inline;
+            align-self: center;
+        }
+
+        .colon-svg {
+            width: 4vw; /* narrower colon now there are more items */
+            height: 100vh;
+            display: block;
+        }
+
+        .digit {
+            text-anchor: middle;
+            dominant-baseline: central;
+            transform-box: fill-box;
+            transform-origin: 50% 50%;
+            font-size: 125px; /* keep height within 100 viewBox units */
+            transform: scaleX(1.6); /* widen without affecting height */
+        }
+
+        .colon {
+            font-weight: normal;
+            text-anchor: middle;
+            dominant-baseline: central;
+            transform-box: fill-box;
+            transform-origin: 50% 50%;
+            font-size: 125px; /* keep height within 100 viewBox units */
+            transform: scaleX(5); /* widen without affecting height */
+        }
+
+        .pm-indicator {
+            position: fixed;
+            bottom: 5vh;
+            right: 4vw;
+            width: 16vh;
+            height: 8vh;
+            display: none;
+            z-index: 9999;
+        }
+
+        .pm-indicator.show {
+            display: block;
+        }
+
+        .pm-text {
+            font-family: monospace;
+            fill: red;
+            text-anchor: middle;
+            dominant-baseline: central;
+            font-size: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="clock-container">
+        
+        <!-- Hour tens digit -->
+        <span class="digit-span">
+            <svg class="digit-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <text class="digit" id="hour-tens" x="50" y="50">1</text>
+            </svg>
+        </span>
+        
+        <!-- Hour ones digit -->
+        <span class="digit-span">
+            <svg class="digit-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <text class="digit" id="hour-ones" x="50" y="50">2</text>
+            </svg>
+        </span>
+        
+        <!-- Colon -->
+        <span class="colon-span">
+            <svg class="colon-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <text class="colon" x="50" y="50">:</text>
+            </svg>
+        </span>
+        
+        <!-- Minute tens digit -->
+        <span class="digit-span">
+            <svg class="digit-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <text class="digit" id="minute-tens" x="50" y="50">3</text>
+            </svg>
+        </span>
+        
+        <!-- Minute ones digit -->
+        <span class="digit-span">
+            <svg class="digit-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <text class="digit" id="minute-ones" x="50" y="50">4</text>
+            </svg>
+        </span>
+
+        <!-- Colon between minutes and seconds -->
+        <span class="colon-span">
+            <svg class="colon-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <text class="colon" x="50" y="50">:</text>
+            </svg>
+        </span>
+
+        <!-- Second tens digit -->
+        <span class="digit-span">
+            <svg class="digit-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <text class="digit" id="second-tens" x="50" y="50">5</text>
+            </svg>
+        </span>
+        
+        <!-- Second ones digit -->
+        <span class="digit-span">
+            <svg class="digit-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <text class="digit" id="second-ones" x="50" y="50">6</text>
+            </svg>
+        </span>
+    </div>
+    <div class="pm-indicator" id="pm-indicator">
+        <svg width="100%" height="100%" viewBox="0 0 100 100">
+            <text class="pm-text" x="50" y="50">PM</text>
+        </svg>
+    </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            const pmIndicator = document.getElementById('pm-indicator');
+            
+            // Get individual digit elements
+            const hourTens = document.getElementById('hour-tens');
+            const hourOnes = document.getElementById('hour-ones');
+            const minuteTens = document.getElementById('minute-tens');
+            const minuteOnes = document.getElementById('minute-ones');
+            const secondTens = document.getElementById('second-tens');
+            const secondOnes = document.getElementById('second-ones');
+            
+            // Format time in 12-hour format
+            let hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            const isAM = hours < 12;
+            
+            // Convert to 12-hour format
+            hours = hours % 12;
+            hours = hours ? hours : 12; // 0 should be 12
+            
+            // Format with leading zeros
+            const hoursStr = String(hours).padStart(2, '0');
+            const minutesStr = String(minutes).padStart(2, '0');
+            const secondsStr = String(seconds).padStart(2, '0');
+
+            // Update individual digit elements
+            if (hourTens) hourTens.textContent = hoursStr[0];
+            if (hourOnes) hourOnes.textContent = hoursStr[1];
+            if (minuteTens) minuteTens.textContent = minutesStr[0];
+            if (minuteOnes) minuteOnes.textContent = minutesStr[1];
+            if (secondTens) secondTens.textContent = secondsStr[0];
+            if (secondOnes) secondOnes.textContent = secondsStr[1];
+            
+            // Hide hour tens digit if it's 0 (for times like 1:00, 2:00, etc.)
+            if (hourTens) {
+                hourTens.style.opacity = (hoursStr[0] === '0') ? '0' : '1';
+            }
+            
+            // Show/hide PM indicator
+            if (pmIndicator) {
+                if (isAM) pmIndicator.classList.remove('show'); 
+                else pmIndicator.classList.add('show');
+            }
+        }
+
+        // Start the clock and update every second
+        updateClock();
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>
