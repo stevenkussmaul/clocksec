@@ -62,23 +62,33 @@
             display: block;
         }
 
-        .digit {
-            text-anchor: middle;
-            dominant-baseline: central;
-            transform-box: fill-box;
-            transform-origin: 50% 50%;
-            font-size: 125px; /* keep height within 100 viewBox units */
-            transform: scaleX(1.6); /* widen without affecting height */
+        /* container for the minutes->seconds block so we can hide/show it easily */
+        .seconds-block {
+            display: inline-flex;
+            align-items: center;
+            gap: 0;
         }
 
-        .colon {
-            font-weight: normal;
-            text-anchor: middle;
-            dominant-baseline: central;
-            transform-box: fill-box;
-            transform-origin: 50% 50%;
-            font-size: 125px; /* keep height within 100 viewBox units */
-            transform: scaleX(5); /* widen without affecting height */
+        /* simple settings toggle */
+        .settings-toggle {
+            position: fixed;
+            top: 2vh;
+            right: 2vw;
+            color: #ffffff;
+            font-family: monospace;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.03);
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            backdrop-filter: blur(4px);
+        }
+
+        .settings-toggle input {
+            width: 1.2rem;
+            height: 1.2rem;
         }
 
         .pm-indicator {
@@ -142,27 +152,39 @@
             </svg>
         </span>
 
-        <!-- Colon between minutes and seconds -->
-        <span class="colon-span">
-            <svg class="colon-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <text class="colon" x="50" y="50">:</text>
-            </svg>
-        </span>
+        <!-- Minutes+seconds block (toggleable) -->
+        <span class="seconds-block">
+            <!-- Colon between minutes and seconds -->
+            <span class="colon-span">
+                <svg class="colon-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <text class="colon" x="50" y="50">:</text>
+                </svg>
+            </span>
 
-        <!-- Second tens digit -->
-        <span class="digit-span">
-            <svg class="digit-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <text class="digit" id="second-tens" x="50" y="50">5</text>
-            </svg>
-        </span>
-        
-        <!-- Second ones digit -->
-        <span class="digit-span">
-            <svg class="digit-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <text class="digit" id="second-ones" x="50" y="50">6</text>
-            </svg>
+            <!-- Second tens digit -->
+            <span class="digit-span">
+                <svg class="digit-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <text class="digit" id="second-tens" x="50" y="50">5</text>
+                </svg>
+            </span>
+
+            <!-- Second ones digit -->
+            <span class="digit-span">
+                <svg class="digit-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <text class="digit" id="second-ones" x="50" y="50">6</text>
+                </svg>
+            </span>
         </span>
     </div>
+
+    <!-- simple toggle to show/hide seconds -->
+    <div class="settings-toggle" title="Toggle seconds display">
+        <label for="toggle-seconds" style="display:inline-flex;align-items:center;gap:.4rem;color:#fff;">
+            <input type="checkbox" id="toggle-seconds" />
+            <span style="font-size:14px;">Show seconds</span>
+        </label>
+    </div>
+
     <div class="pm-indicator" id="pm-indicator">
         <svg width="100%" height="100%" viewBox="0 0 100 100">
             <text class="pm-text" x="50" y="50">PM</text>
@@ -217,9 +239,28 @@
             }
         }
 
+        function applyShowSeconds(show) {
+            const secondsBlock = document.querySelector('.seconds-block');
+            const toggle = document.getElementById('toggle-seconds');
+            if (secondsBlock) secondsBlock.style.display = show ? 'inline-flex' : 'none';
+            if (toggle) toggle.checked = !!show;
+            try { localStorage.setItem('showSeconds', show ? '1' : '0'); } catch (e) { /* ignore */ }
+        }
+
         // Start the clock and update every second
         updateClock();
         setInterval(updateClock, 1000);
+
+        // Initialize seconds toggle from localStorage
+        (function initSecondsToggle(){
+            const stored = (function(){ try { return localStorage.getItem('showSeconds'); } catch(e){ return null; }})();
+            const show = stored === null ? true : stored === '1';
+            const toggle = document.getElementById('toggle-seconds');
+            if (toggle) {
+                toggle.addEventListener('change', (e) => applyShowSeconds(e.target.checked));
+            }
+            applyShowSeconds(show);
+        })();
     </script>
 </body>
 </html>
